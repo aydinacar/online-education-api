@@ -1,0 +1,63 @@
+import { Router } from "express";
+import { coursesController } from "@/controllers/courses.controller";
+import { authenticate } from "@/middleware/auth.middleware";
+import { requireRole } from "@/middleware/role.middleware";
+import { validate } from "@/middleware/validate.middleware";
+import { asyncHandler } from "@/utils/async-handler";
+import {
+  createCourseSchema,
+  updateCourseSchema,
+  courseFilterSchema,
+} from "@/validations/course.schema";
+import { idParamSchema, slugParamSchema } from "@/validations/common.schema";
+import { z } from "zod";
+import { ROLES } from "@/config/constants";
+
+const router = Router();
+
+// Public
+router.get("/", validate(courseFilterSchema), asyncHandler(coursesController.list));
+
+// Authenticated user'ın kayıtlı olduğu kurslar
+router.get("/my", authenticate, asyncHandler(coursesController.myCourses));
+
+router.get(
+  "/:slug",
+  validate(z.object({ params: slugParamSchema })),
+  asyncHandler(coursesController.getBySlug),
+);
+
+// Eğitmen / admin
+router.post(
+  "/",
+  authenticate,
+  requireRole(ROLES.INSTRUCTOR, ROLES.ADMIN),
+  validate(createCourseSchema),
+  asyncHandler(coursesController.create),
+);
+
+router.patch(
+  "/:id",
+  authenticate,
+  requireRole(ROLES.INSTRUCTOR, ROLES.ADMIN),
+  validate(z.object({ params: idParamSchema, body: updateCourseSchema.shape.body })),
+  asyncHandler(coursesController.update),
+);
+
+router.delete(
+  "/:id",
+  authenticate,
+  requireRole(ROLES.INSTRUCTOR, ROLES.ADMIN),
+  validate(z.object({ params: idParamSchema })),
+  asyncHandler(coursesController.delete),
+);
+
+// Enrollment
+router.post(
+  "/:id/enroll",
+  authenticate,
+  validate(z.object({ params: idParamSchema })),
+  asyncHandler(coursesController.enroll),
+);
+
+export default router;
