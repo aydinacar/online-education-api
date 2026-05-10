@@ -2,34 +2,54 @@ import type { Request, Response } from "express";
 import { authService } from "@/services/auth.service";
 import { sendSuccess, sendCreated } from "@/utils/api-response";
 import { ApiError } from "@/utils/api-error";
+import {
+  setAccessTokenCookie,
+  setRefreshTokenCookie,
+  clearAuthCookies,
+  REFRESH_TOKEN_COOKIE,
+} from "@/utils/cookies";
 
 export const authController = {
   register: async (req: Request, res: Response) => {
-    const result = await authService.register(req.body, {
+    const { user, accessToken, refreshToken } = await authService.register(req.body, {
       userAgent: req.headers["user-agent"],
       ipAddress: req.ip,
     });
-    sendCreated(res, result, "Kayıt başarılı");
+    setAccessTokenCookie(res, accessToken);
+    setRefreshTokenCookie(res, refreshToken);
+    sendCreated(res, { user }, "Kayıt başarılı");
   },
 
   login: async (req: Request, res: Response) => {
-    const result = await authService.login(req.body, {
+    const { user, accessToken, refreshToken } = await authService.login(req.body, {
       userAgent: req.headers["user-agent"],
       ipAddress: req.ip,
     });
-    sendSuccess(res, { data: result, message: "Giriş başarılı" });
+    setAccessTokenCookie(res, accessToken);
+    setRefreshTokenCookie(res, refreshToken);
+    sendSuccess(res, { data: { user }, message: "Giriş başarılı" });
   },
 
   refresh: async (req: Request, res: Response) => {
-    const tokens = await authService.refresh(req.body.refreshToken, {
+    const refreshToken = req.cookies?.[REFRESH_TOKEN_COOKIE];
+    if (!refreshToken) {
+      throw ApiError.unauthorized("Refresh token bulunamadı");
+    }
+    const tokens = await authService.refresh(refreshToken, {
       userAgent: req.headers["user-agent"],
       ipAddress: req.ip,
     });
-    sendSuccess(res, { data: tokens });
+    setAccessTokenCookie(res, tokens.accessToken);
+    setRefreshTokenCookie(res, tokens.refreshToken);
+    sendSuccess(res, { data: { success: true } });
   },
 
   logout: async (req: Request, res: Response) => {
-    await authService.logout(req.body.refreshToken);
+    const refreshToken = req.cookies?.[REFRESH_TOKEN_COOKIE];
+    if (refreshToken) {
+      await authService.logout(refreshToken);
+    }
+    clearAuthCookies(res);
     sendSuccess(res, { data: null, message: "Çıkış yapıldı" });
   },
 

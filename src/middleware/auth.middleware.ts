@@ -1,19 +1,18 @@
 import type { Request, Response, NextFunction } from "express";
 import { ApiError } from "@/utils/api-error";
 import { tokenService } from "@/services/token.service";
+import { ACCESS_TOKEN_COOKIE } from "@/utils/cookies";
 
 /**
- * Authorization: Bearer <accessToken> header'ını doğrular,
- * req.user'ı set eder. Geçersizse 401.
+ * httpOnly access_token cookie'sini doğrular ve req.user'ı set eder.
+ * Geçersizse 401.
  */
 export const authenticate = (req: Request, _res: Response, next: NextFunction) => {
-  const authHeader = req.headers.authorization;
+  const token = req.cookies?.[ACCESS_TOKEN_COOKIE];
 
-  if (!authHeader || !authHeader.startsWith("Bearer ")) {
+  if (!token) {
     return next(ApiError.unauthorized("Token gerekli"));
   }
-
-  const token = authHeader.slice(7); // "Bearer ".length
 
   try {
     const payload = tokenService.verifyAccessToken(token);
@@ -29,17 +28,16 @@ export const authenticate = (req: Request, _res: Response, next: NextFunction) =
 };
 
 /**
- * Auth opsiyonel - token varsa user'ı set et, yoksa devam et.
- * Public endpoint'lerde "kullanıcı login mi" bilgisi lazımsa kullanılır.
+ * Auth opsiyonel - cookie varsa user'ı set et, yoksa devam et.
  */
 export const optionalAuthenticate = (req: Request, _res: Response, next: NextFunction) => {
-  const authHeader = req.headers.authorization;
-  if (!authHeader || !authHeader.startsWith("Bearer ")) {
+  const token = req.cookies?.[ACCESS_TOKEN_COOKIE];
+  if (!token) {
     return next();
   }
 
   try {
-    const payload = tokenService.verifyAccessToken(authHeader.slice(7));
+    const payload = tokenService.verifyAccessToken(token);
     req.user = {
       id: payload.sub,
       email: payload.email,
