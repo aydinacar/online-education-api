@@ -6,20 +6,36 @@ import { ROLES } from "@/config/constants";
 async function seed() {
   console.log("🌱 Seed başlıyor...");
 
-  // Admin kullanıcı
-  const passwordHash = await hashPassword("Admin123!");
-  await db
-    .insert(users)
-    .values({
-      email: "admin@example.com",
+  const passwordHash = await hashPassword("Test1234");
+
+  const testUsers = [
+    {
+      email: "admin@test.com",
       passwordHash,
-      name: "Admin",
+      name: "Admin User",
       role: ROLES.ADMIN,
       isEmailVerified: true,
-    })
-    .onConflictDoNothing();
+    },
+    {
+      email: "instructor@test.com",
+      passwordHash,
+      name: "Instructor User",
+      role: ROLES.INSTRUCTOR,
+      isEmailVerified: true,
+    },
+    {
+      email: "user@test.com",
+      passwordHash,
+      name: "Test User",
+      role: ROLES.STUDENT,
+      isEmailVerified: true,
+    },
+  ];
 
-  // Kategoriler
+  for (const user of testUsers) {
+    await db.insert(users).values(user).onConflictDoNothing({ target: users.email });
+  }
+
   const defaultCategories = [
     { name: "Web Geliştirme", slug: "web-gelistirme" },
     { name: "Mobil Geliştirme", slug: "mobil-gelistirme" },

@@ -14,12 +14,12 @@ COPY package.json package-lock.json tsconfig.json tsconfig.node.json ./
 COPY src ./src
 RUN npm run build
 
-# ---- migrate: drizzle-kit + schema/migrations (used by compose `migrate` service) ----
+# ---- migrate: drizzle-kit + schema/migrations (used by compose `migrate` & `seed` services) ----
 FROM node:22-alpine AS migrate
 WORKDIR /app
 ENV NODE_ENV=production
 COPY --from=deps /app/node_modules ./node_modules
-COPY package.json package-lock.json drizzle.config.ts ./
+COPY package.json package-lock.json drizzle.config.ts tsconfig.json tsconfig.node.json ./
 COPY src ./src
 USER node
 CMD ["npm", "run", "db:migrate"]
