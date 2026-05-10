@@ -1,0 +1,50 @@
+services:
+  db:
+    image: postgres:16-alpine
+    container_name: oe-db
+    environment:
+      POSTGRES_USER: john
+      POSTGRES_PASSWORD: "123456"
+      POSTGRES_DB: online_education
+    volumes:
+      - pg_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U john -d online_education"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+    restart: unless-stopped
+
+  backend:
+    build:
+      context: .
+      target: runtime
+    container_name: oe-backend
+    env_file:
+      - .env
+    environment:
+      DATABASE_URL: postgresql://john:123456@db:5432/online_education
+      NODE_ENV: production
+    ports:
+      - "4000:4000"
+    depends_on:
+      db:
+        condition: service_healthy
+    restart: unless-stopped
+
+  migrate:
+    build:
+      context: .
+      target: migrate
+    profiles: ["migrate"]
+    env_file:
+      - .env
+    environment:
+      DATABASE_URL: postgresql://john:123456@db:5432/online_education
+      NODE_ENV: production
+    depends_on:
+      db:
+        condition: service_healthy
+
+volumes:
+  pg_data:
