@@ -1,6 +1,6 @@
-import { eq, asc } from "drizzle-orm";
+import { eq, asc, count } from "drizzle-orm";
 import { db } from "@/config/database";
-import { categories } from "@/db/schema";
+import { categories, courses } from "@/db/schema";
 import { ApiError } from "@/utils/api-error";
 import { slugify } from "@/utils/slugify";
 import type {
@@ -43,6 +43,18 @@ export const categoriesService = {
   },
 
   async delete(id: string) {
+    const [row] = await db
+      .select({ count: count() })
+      .from(courses)
+      .where(eq(courses.categoryId, id));
+    const courseCount = row?.count ?? 0;
+
+    if (courseCount > 0) {
+      throw ApiError.conflict(
+        `Bu kategoriye bağlı ${courseCount} kurs var; önce kursları taşıyın veya silin`,
+      );
+    }
+
     const [c] = await db
       .delete(categories)
       .where(eq(categories.id, id))
