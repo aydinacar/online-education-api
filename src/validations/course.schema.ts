@@ -12,13 +12,17 @@ export const createCourseSchema = z.object({
     thumbnail: z.string().url().optional(),
     whatYouWillLearn: z.array(z.string().min(1).max(200)).optional(),
     requirements: z.array(z.string().min(1).max(200)).optional(),
+    instructorId: z.string().uuid().optional(),
   }),
 });
 
 export const updateCourseSchema = z.object({
-  body: createCourseSchema.shape.body.partial().extend({
-    isPublished: z.boolean().optional(),
-  }),
+  body: createCourseSchema.shape.body
+    .omit({ instructorId: true })
+    .partial()
+    .extend({
+      isPublished: z.boolean().optional(),
+    }),
 });
 
 export const courseFilterSchema = z.object({

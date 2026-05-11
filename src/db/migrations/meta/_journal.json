@@ -8,6 +8,13 @@
       "when": 1778429494641,
       "tag": "0000_right_king_bedlam",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1778527856532,
+      "tag": "0001_cold_wendigo",
+      "breakpoints": true
     }
   ]
 }

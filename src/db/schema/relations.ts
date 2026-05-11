@@ -9,14 +9,31 @@ import { enrollments } from "./enrollments";
 import { lessonProgress } from "./lesson-progress";
 import { reviews } from "./reviews";
 import { payments } from "./payments";
+import { workspaces } from "./workspaces";
 
-export const usersRelations = relations(users, ({ many }) => ({
+export const usersRelations = relations(users, ({ one, many }) => ({
   refreshTokens: many(refreshTokens),
   coursesAsInstructor: many(courses),
   enrollments: many(enrollments),
   reviews: many(reviews),
   payments: many(payments),
   lessonProgress: many(lessonProgress),
+  workspace: one(workspaces, {
+    fields: [users.workspaceId],
+    references: [workspaces.id],
+    relationName: "workspaceMembers",
+  }),
+  ownedWorkspaces: many(workspaces, { relationName: "workspaceOwner" }),
+}));
+
+export const workspacesRelations = relations(workspaces, ({ one, many }) => ({
+  owner: one(users, {
+    fields: [workspaces.ownerId],
+    references: [users.id],
+    relationName: "workspaceOwner",
+  }),
+  members: many(users, { relationName: "workspaceMembers" }),
+  courses: many(courses),
 }));
 
 export const refreshTokensRelations = relations(refreshTokens, ({ one }) => ({
@@ -38,6 +55,10 @@ export const coursesRelations = relations(courses, ({ one, many }) => ({
   category: one(categories, {
     fields: [courses.categoryId],
     references: [categories.id],
+  }),
+  workspace: one(workspaces, {
+    fields: [courses.workspaceId],
+    references: [workspaces.id],
   }),
   sections: many(sections),
   enrollments: many(enrollments),

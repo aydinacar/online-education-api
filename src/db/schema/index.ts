@@ -1,5 +1,6 @@
 export * from "./users";
 export * from "./refresh-tokens";
+export * from "./workspaces";
 export * from "./categories";
 export * from "./courses";
 export * from "./sections";

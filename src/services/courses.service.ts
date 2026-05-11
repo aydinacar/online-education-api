@@ -1,6 +1,6 @@
 import { eq, and, desc, asc, ilike, gte, lte, count, sql, type SQL } from "drizzle-orm";
 import { db } from "@/config/database";
-import { courses, categories, users } from "@/db/schema";
+import { courses, categories, users, workspaces } from "@/db/schema";
 import { ApiError } from "@/utils/api-error";
 import { slugify } from "@/utils/slugify";
 import { getPagination, buildPaginationMeta } from "@/utils/pagination";
@@ -105,15 +105,62 @@ export const coursesService = {
     return { ...row.course, category: row.category, instructor: row.instructor };
   },
 
-  async create(instructorId: string, input: CreateCourseInput) {
+  async create(callerId: string, input: CreateCourseInput) {
+    const [caller] = await db
+      .select({
+        id: users.id,
+        workspaceId: users.workspaceId,
+      })
+      .from(users)
+      .where(eq(users.id, callerId))
+      .limit(1);
+    if (!caller) throw ApiError.unauthorized();
+    if (!caller.workspaceId) {
+      throw ApiError.forbidden(
+        "Kurs oluşturmak için önce bir workspace oluşturun",
+      );
+    }
+
+    let instructorId = callerId;
+    if (input.instructorId && input.instructorId !== callerId) {
+      const [workspace] = await db
+        .select({ ownerId: workspaces.ownerId })
+        .from(workspaces)
+        .where(eq(workspaces.id, caller.workspaceId))
+        .limit(1);
+      if (!workspace || workspace.ownerId !== callerId) {
+        throw ApiError.forbidden(
+          "Başka bir kullanıcıya kurs atamak için workspace sahibi olmalısınız",
+        );
+      }
+      const [target] = await db
+        .select({ id: users.id })
+        .from(users)
+        .where(
+          and(
+            eq(users.id, input.instructorId),
+            eq(users.workspaceId, caller.workspaceId),
+          ),
+        )
+        .limit(1);
+      if (!target) {
+        throw ApiError.badRequest(
+          "Atanan eğitmen bu workspace'in üyesi olmalı",
+        );
+      }
+      instructorId = target.id;
+    }
+
+    const { instructorId: _omit, ...rest } = input;
     const slug = slugify(input.title);
     const [course] = await db
       .insert(courses)
       .values({
-        ...input,
+        ...rest,
         slug,
         price: input.price.toString(),
         instructorId,
+        workspaceId: caller.workspaceId,
       })
       .returning();
     return course;

@@ -12,6 +12,7 @@ import {
 } from "drizzle-orm/pg-core";
 import { users } from "./users";
 import { categories } from "./categories";
+import { workspaces } from "./workspaces";
 import { COURSE_LEVELS } from "@/config/constants";
 
 export const courseLevelEnum = pgEnum("course_level", COURSE_LEVELS);
@@ -44,6 +45,9 @@ export const courses = pgTable(
     categoryId: uuid("category_id")
       .notNull()
       .references(() => categories.id, { onDelete: "restrict" }),
+    workspaceId: uuid("workspace_id")
+      .notNull()
+      .references(() => workspaces.id, { onDelete: "restrict" }),
 
     // JSON kolonlar yerine basit metin dizileri için ayrı tablo da yapılabilir;
     // şimdilik text array kullanıyoruz
@@ -56,6 +60,7 @@ export const courses = pgTable(
   (table) => ({
     instructorIdx: index("courses_instructor_idx").on(table.instructorId),
     categoryIdx: index("courses_category_idx").on(table.categoryId),
+    workspaceIdx: index("courses_workspace_idx").on(table.workspaceId),
     publishedIdx: index("courses_published_idx").on(table.isPublished),
   }),
 );
