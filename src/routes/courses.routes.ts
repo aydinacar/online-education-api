@@ -1,6 +1,6 @@
 import { Router } from "express";
 import { coursesController } from "@/controllers/courses.controller";
-import { authenticate } from "@/middleware/auth.middleware";
+import { authenticate, optionalAuthenticate } from "@/middleware/auth.middleware";
 import { requireRole } from "@/middleware/role.middleware";
 import { validate } from "@/middleware/validate.middleware";
 import { asyncHandler } from "@/utils/async-handler";
@@ -15,8 +15,13 @@ import { ROLES } from "@/config/constants";
 
 const router = Router();
 
-// Public
-router.get("/", validate(courseFilterSchema), asyncHandler(coursesController.list));
+// Public (admin token varsa draft kurslar da listelenir)
+router.get(
+  "/",
+  optionalAuthenticate,
+  validate(courseFilterSchema),
+  asyncHandler(coursesController.list),
+);
 
 // Authenticated user'ın kayıtlı olduğu kurslar
 router.get("/my", authenticate, asyncHandler(coursesController.myCourses));

@@ -4,6 +4,11 @@ import { sendSuccess, sendCreated, sendNoContent } from "@/utils/api-response";
 import { ApiError } from "@/utils/api-error";
 
 export const workspacesController = {
+  list: async (_req: Request, res: Response) => {
+    const data = await workspacesService.list();
+    sendSuccess(res, { data });
+  },
+
   create: async (req: Request, res: Response) => {
     if (!req.user) throw ApiError.unauthorized();
     const workspace = await workspacesService.create(req.user.id, req.body);

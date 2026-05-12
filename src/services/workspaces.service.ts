@@ -27,6 +27,29 @@ async function generateUniqueSlug(base: string): Promise<string> {
 
 export const workspacesService = {
   /**
+   * Admin: list all workspaces (with owner basic info).
+   */
+  async list() {
+    return db
+      .select({
+        id: workspaces.id,
+        name: workspaces.name,
+        slug: workspaces.slug,
+        ownerId: workspaces.ownerId,
+        createdAt: workspaces.createdAt,
+        updatedAt: workspaces.updatedAt,
+        owner: {
+          id: users.id,
+          name: users.name,
+          email: users.email,
+        },
+      })
+      .from(workspaces)
+      .leftJoin(users, eq(workspaces.ownerId, users.id))
+      .orderBy(asc(workspaces.name));
+  },
+
+  /**
    * Caller creates a workspace and becomes its owner.
    * Caller must not already belong to a workspace.
    * Promotes caller from `student` to `instructor` (admin role is left intact).

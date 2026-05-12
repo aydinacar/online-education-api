@@ -2,6 +2,7 @@ import { Router } from "express";
 import { z } from "zod";
 import { workspacesController } from "@/controllers/workspaces.controller";
 import { authenticate } from "@/middleware/auth.middleware";
+import { requireRole } from "@/middleware/role.middleware";
 import { validate } from "@/middleware/validate.middleware";
 import { asyncHandler } from "@/utils/async-handler";
 import {
@@ -11,10 +12,18 @@ import {
   transferOwnershipSchema,
 } from "@/validations/workspace.schema";
 import { idParamSchema } from "@/validations/common.schema";
+import { ROLES } from "@/config/constants";
 
 const router = Router();
 
 router.use(authenticate);
+
+// Admin: tüm workspace'leri listele
+router.get(
+  "/",
+  requireRole(ROLES.ADMIN),
+  asyncHandler(workspacesController.list),
+);
 
 router.post(
   "/",

@@ -12,13 +12,17 @@ import type {
 } from "@/validations/course.schema";
 
 export const coursesService = {
-  async list(filters: CourseFilterInput) {
+  async list(filters: CourseFilterInput, viewer?: { role: Role }) {
     const { page, limit, offset } = getPagination({
       page: filters.page,
       limit: filters.limit,
     });
 
-    const where: SQL[] = [eq(courses.isPublished, true)];
+    const where: SQL[] = [];
+    // Admin draft kursları da görür; diğer herkese sadece published
+    if (viewer?.role !== "admin") {
+      where.push(eq(courses.isPublished, true));
+    }
     if (filters.search) {
       where.push(ilike(courses.title, `%${filters.search}%`));
     }
@@ -60,10 +64,16 @@ export const coursesService = {
           avatar: users.avatar,
           headline: users.headline,
         },
+        workspace: {
+          id: workspaces.id,
+          name: workspaces.name,
+          slug: workspaces.slug,
+        },
       })
       .from(courses)
       .leftJoin(categories, eq(courses.categoryId, categories.id))
       .leftJoin(users, eq(courses.instructorId, users.id))
+      .leftJoin(workspaces, eq(courses.workspaceId, workspaces.id))
       .where(and(...where))
       .orderBy(orderBy)
       .limit(limit)
@@ -77,7 +87,12 @@ export const coursesService = {
     const total = totalRows[0]?.total ?? 0;
 
     return {
-      data: data.map((row) => ({ ...row.course, category: row.category, instructor: row.instructor })),
+      data: data.map((row) => ({
+        ...row.course,
+        category: row.category,
+        instructor: row.instructor,
+        workspace: row.workspace,
+      })),
       meta: buildPaginationMeta(page, limit, Number(total)),
     };
   },
@@ -93,53 +108,65 @@ export const coursesService = {
           avatar: users.avatar,
           headline: users.headline,
         },
+        workspace: {
+          id: workspaces.id,
+          name: workspaces.name,
+          slug: workspaces.slug,
+        },
       })
       .from(courses)
       .leftJoin(categories, eq(courses.categoryId, categories.id))
       .leftJoin(users, eq(courses.instructorId, users.id))
+      .leftJoin(workspaces, eq(courses.workspaceId, workspaces.id))
       .where(eq(courses.slug, slug))
       .limit(1);
 
     if (!row) throw ApiError.notFound("Kurs bulunamadı");
 
-    return { ...row.course, category: row.category, instructor: row.instructor };
+    return {
+      ...row.course,
+      category: row.category,
+      instructor: row.instructor,
+      workspace: row.workspace,
+    };
   },
 
   async create(callerId: string, input: CreateCourseInput) {
     const [caller] = await db
       .select({
         id: users.id,
+        role: users.role,
         workspaceId: users.workspaceId,
       })
       .from(users)
       .where(eq(users.id, callerId))
       .limit(1);
     if (!caller) throw ApiError.unauthorized();
-    if (!caller.workspaceId) {
-      throw ApiError.forbidden(
-        "Kurs oluşturmak için önce bir workspace oluşturun",
-      );
-    }
 
-    let instructorId = callerId;
-    if (input.instructorId && input.instructorId !== callerId) {
-      const [workspace] = await db
-        .select({ ownerId: workspaces.ownerId })
-        .from(workspaces)
-        .where(eq(workspaces.id, caller.workspaceId))
-        .limit(1);
-      if (!workspace || workspace.ownerId !== callerId) {
-        throw ApiError.forbidden(
-          "Başka bir kullanıcıya kurs atamak için workspace sahibi olmalısınız",
-        );
+    let workspaceId: string;
+    let instructorId: string;
+
+    if (caller.role === "admin") {
+      if (!input.workspaceId) {
+        throw ApiError.badRequest("Admin için workspaceId zorunlu");
       }
+      if (!input.instructorId) {
+        throw ApiError.badRequest("Admin için instructorId zorunlu");
+      }
+      const [ws] = await db
+        .select({ id: workspaces.id })
+        .from(workspaces)
+        .where(eq(workspaces.id, input.workspaceId))
+        .limit(1);
+      if (!ws) throw ApiError.badRequest("Workspace bulunamadı");
+
       const [target] = await db
         .select({ id: users.id })
         .from(users)
         .where(
           and(
             eq(users.id, input.instructorId),
-            eq(users.workspaceId, caller.workspaceId),
+            eq(users.workspaceId, input.workspaceId),
           ),
         )
         .limit(1);
@@ -148,10 +175,48 @@ export const coursesService = {
           "Atanan eğitmen bu workspace'in üyesi olmalı",
         );
       }
+      workspaceId = input.workspaceId;
       instructorId = target.id;
+    } else {
+      if (!caller.workspaceId) {
+        throw ApiError.forbidden(
+          "Kurs oluşturmak için önce bir workspace oluşturun",
+        );
+      }
+      workspaceId = caller.workspaceId;
+      instructorId = callerId;
+
+      if (input.instructorId && input.instructorId !== callerId) {
+        const [workspace] = await db
+          .select({ ownerId: workspaces.ownerId })
+          .from(workspaces)
+          .where(eq(workspaces.id, caller.workspaceId))
+          .limit(1);
+        if (!workspace || workspace.ownerId !== callerId) {
+          throw ApiError.forbidden(
+            "Başka bir kullanıcıya kurs atamak için workspace sahibi olmalısınız",
+          );
+        }
+        const [target] = await db
+          .select({ id: users.id })
+          .from(users)
+          .where(
+            and(
+              eq(users.id, input.instructorId),
+              eq(users.workspaceId, caller.workspaceId),
+            ),
+          )
+          .limit(1);
+        if (!target) {
+          throw ApiError.badRequest(
+            "Atanan eğitmen bu workspace'in üyesi olmalı",
+          );
+        }
+        instructorId = target.id;
+      }
     }
 
-    const { instructorId: _omit, ...rest } = input;
+    const { instructorId: _i, workspaceId: _w, ...rest } = input;
     const slug = slugify(input.title);
     const [course] = await db
       .insert(courses)
@@ -160,7 +225,7 @@ export const coursesService = {
         slug,
         price: input.price.toString(),
         instructorId,
-        workspaceId: caller.workspaceId,
+        workspaceId,
       })
       .returning();
     return course;

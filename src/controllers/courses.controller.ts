@@ -7,7 +7,10 @@ import type { CourseFilterInput } from "@/validations/course.schema";
 
 export const coursesController = {
   list: async (req: Request, res: Response) => {
-    const result = await coursesService.list(req.query as unknown as CourseFilterInput);
+    const result = await coursesService.list(
+      req.query as unknown as CourseFilterInput,
+      req.user ? { role: req.user.role } : undefined,
+    );
     sendSuccess(res, { data: result.data, meta: result.meta });
   },
 
