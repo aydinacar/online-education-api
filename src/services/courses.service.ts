@@ -11,6 +11,22 @@ import type {
   CourseFilterInput,
 } from "@/validations/course.schema";
 
+type CourseRow = typeof courses.$inferSelect;
+
+/**
+ * pg driver `numeric` kolonları string olarak döner; API'de number garantilemek için coerce ederiz.
+ */
+function serializeCourse<T extends CourseRow>(row: T): Omit<T, "price" | "rating"> & {
+  price: number;
+  rating: number;
+} {
+  return {
+    ...row,
+    price: Number(row.price),
+    rating: Number(row.rating),
+  };
+}
+
 export const coursesService = {
   async list(filters: CourseFilterInput, viewer?: { role: Role }) {
     const { page, limit, offset } = getPagination({
@@ -88,7 +104,7 @@ export const coursesService = {
 
     return {
       data: data.map((row) => ({
-        ...row.course,
+        ...serializeCourse(row.course),
         category: row.category,
         instructor: row.instructor,
         workspace: row.workspace,
@@ -115,7 +131,7 @@ export const coursesService = {
       .orderBy(desc(courses.updatedAt));
 
     return data.map((row) => ({
-      ...row.course,
+      ...serializeCourse(row.course),
       category: row.category,
       workspace: row.workspace,
     }));
@@ -148,7 +164,7 @@ export const coursesService = {
     if (!row) throw ApiError.notFound("Kurs bulunamadı");
 
     return {
-      ...row.course,
+      ...serializeCourse(row.course),
       category: row.category,
       instructor: row.instructor,
       workspace: row.workspace,
@@ -215,7 +231,7 @@ export const coursesService = {
     if (!row) throw ApiError.notFound("Kurs bulunamadı");
 
     return {
-      ...row.course,
+      ...serializeCourse(row.course),
       category: row.category,
       instructor: row.instructor,
       workspace: row.workspace,
@@ -319,7 +335,8 @@ export const coursesService = {
         workspaceId,
       })
       .returning();
-    return course;
+    if (!course) throw ApiError.internal("Kurs oluşturulamadı");
+    return serializeCourse(course);
   },
 
   async update(
@@ -347,7 +364,8 @@ export const coursesService = {
       .set(update)
       .where(eq(courses.id, id))
       .returning();
-    return course;
+    if (!course) throw ApiError.notFound("Kurs bulunamadı");
+    return serializeCourse(course);
   },
 
   async delete(id: string, actor: { id: string; role: Role }) {

@@ -32,15 +32,15 @@ export const enrollmentsService = {
   },
 
   async myCourses(userId: string) {
-    return db
+    const rows = await db
       .select({
-        enrollment: enrollments,
         course: courses,
         category: categories,
         instructor: {
           id: users.id,
           name: users.name,
           avatar: users.avatar,
+          headline: users.headline,
         },
       })
       .from(enrollments)
@@ -49,6 +49,14 @@ export const enrollmentsService = {
       .leftJoin(users, eq(courses.instructorId, users.id))
       .where(eq(enrollments.userId, userId))
       .orderBy(desc(enrollments.enrolledAt));
+
+    return rows.map((row) => ({
+      ...row.course,
+      price: Number(row.course.price),
+      rating: Number(row.course.rating),
+      category: row.category,
+      instructor: row.instructor,
+    }));
   },
 
   async isEnrolled(userId: string, courseId: string): Promise<boolean> {
