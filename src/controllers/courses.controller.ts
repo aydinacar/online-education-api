@@ -15,7 +15,10 @@ export const coursesController = {
   },
 
   getBySlug: async (req: Request<{ slug: string }>, res: Response) => {
-    const course = await coursesService.getBySlug(req.params.slug);
+    const course = await coursesService.getBySlug(
+      req.params.slug,
+      req.user ? { id: req.user.id, role: req.user.role } : undefined,
+    );
     sendSuccess(res, { data: course });
   },
 

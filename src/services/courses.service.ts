@@ -1,6 +1,16 @@
 import { eq, and, desc, asc, ilike, gte, lte, count, sql, type SQL } from "drizzle-orm";
 import { db } from "@/config/database";
-import { courses, categories, users, workspaces, sections, lessons } from "@/db/schema";
+import {
+  courses,
+  categories,
+  users,
+  workspaces,
+  sections,
+  lessons,
+  enrollments,
+  lessonProgress,
+} from "@/db/schema";
+import { inArray } from "drizzle-orm";
 import { ApiError } from "@/utils/api-error";
 import { slugify } from "@/utils/slugify";
 import { getPagination, buildPaginationMeta } from "@/utils/pagination";
@@ -204,7 +214,7 @@ export const coursesService = {
     };
   },
 
-  async getBySlug(slug: string) {
+  async getBySlug(slug: string, viewer?: { id: string; role: Role }) {
     const [row] = await db
       .select({
         course: courses,
@@ -214,6 +224,7 @@ export const coursesService = {
           name: users.name,
           avatar: users.avatar,
           headline: users.headline,
+          bio: users.bio,
         },
         workspace: {
           id: workspaces.id,
@@ -230,11 +241,103 @@ export const coursesService = {
 
     if (!row) throw ApiError.notFound("Kurs bulunamadı");
 
+    const isOwner = !!viewer && row.course.instructorId === viewer.id;
+    const isAdmin = viewer?.role === "admin";
+
+    // Yayında değilse yalnızca owner / admin görebilir
+    if (!row.course.isPublished && !isOwner && !isAdmin) {
+      throw ApiError.notFound("Kurs bulunamadı");
+    }
+
+    let isEnrolled = false;
+    let progress: number | undefined;
+    if (viewer) {
+      const [enr] = await db
+        .select({ progress: enrollments.progress })
+        .from(enrollments)
+        .where(
+          and(
+            eq(enrollments.userId, viewer.id),
+            eq(enrollments.courseId, row.course.id),
+          ),
+        )
+        .limit(1);
+      if (enr) {
+        isEnrolled = true;
+        progress = enr.progress;
+      }
+    }
+
+    const sectionRows = await db
+      .select()
+      .from(sections)
+      .where(eq(sections.courseId, row.course.id))
+      .orderBy(asc(sections.order), asc(sections.createdAt));
+
+    const lessonRows = await db
+      .select()
+      .from(lessons)
+      .where(eq(lessons.courseId, row.course.id))
+      .orderBy(asc(lessons.order), asc(lessons.createdAt));
+
+    const canSeeContent = isEnrolled || isOwner || isAdmin;
+
+    // Enrolled kullanıcı için per-lesson progress'i tek query'de getir
+    let progressByLesson: Record<string, { isCompleted: boolean; watchedSeconds: number }> = {};
+    if (viewer && lessonRows.length > 0) {
+      const progressRows = await db
+        .select({
+          lessonId: lessonProgress.lessonId,
+          isCompleted: lessonProgress.isCompleted,
+          watchedSeconds: lessonProgress.watchedSeconds,
+        })
+        .from(lessonProgress)
+        .where(
+          and(
+            eq(lessonProgress.userId, viewer.id),
+            inArray(
+              lessonProgress.lessonId,
+              lessonRows.map((l) => l.id),
+            ),
+          ),
+        );
+      progressByLesson = Object.fromEntries(
+        progressRows.map((p) => [
+          p.lessonId,
+          { isCompleted: p.isCompleted, watchedSeconds: p.watchedSeconds },
+        ]),
+      );
+    }
+
+    const sanitizedLessons = lessonRows.map((lesson) => {
+      const canPlay = canSeeContent || lesson.isFree;
+      const lessonProgress = progressByLesson[lesson.id];
+      return {
+        ...lesson,
+        videoUrl: canPlay ? lesson.videoUrl : null,
+        content: canPlay ? lesson.content : null,
+        meetingUrl: canPlay ? lesson.meetingUrl : null,
+        recordingUrl: canPlay ? lesson.recordingUrl : null,
+        isCompleted: lessonProgress?.isCompleted ?? false,
+        watchedSeconds: lessonProgress?.watchedSeconds ?? 0,
+      };
+    });
+
     return {
       ...serializeCourse(row.course),
       category: row.category,
       instructor: row.instructor,
       workspace: row.workspace,
+      sections: sectionRows.map((s) => ({
+        id: s.id,
+        title: s.title,
+        order: s.order,
+        lessons: sanitizedLessons
+          .filter((l) => l.sectionId === s.id)
+          .sort((a, b) => a.order - b.order),
+      })),
+      isEnrolled,
+      progress,
     };
   },
 

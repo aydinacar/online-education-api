@@ -53,6 +53,7 @@ router.get(
 
 router.get(
   "/:slug",
+  optionalAuthenticate,
   validate(z.object({ params: slugParamSchema })),
   asyncHandler(coursesController.getBySlug),
 );
