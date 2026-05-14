@@ -9,4 +9,5 @@ export * from "./enrollments";
 export * from "./lesson-progress";
 export * from "./reviews";
 export * from "./payments";
+export * from "./instructor-applications";
 export * from "./relations";

@@ -9,6 +9,7 @@ import categoriesRoutes from "./categories.routes";
 import reviewsRoutes from "./reviews.routes";
 import paymentsRoutes from "./payments.routes";
 import workspacesRoutes from "./workspaces.routes";
+import instructorApplicationsRoutes from "./instructor-applications.routes";
 
 const router = Router();
 
@@ -26,5 +27,6 @@ router.use("/categories", categoriesRoutes);
 router.use("/reviews", reviewsRoutes);
 router.use("/payments", paymentsRoutes);
 router.use("/workspaces", workspacesRoutes);
+router.use("/instructor-applications", instructorApplicationsRoutes);
 
 export default router;

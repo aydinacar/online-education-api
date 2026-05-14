@@ -10,6 +10,7 @@ import { lessonProgress } from "./lesson-progress";
 import { reviews } from "./reviews";
 import { payments } from "./payments";
 import { workspaces } from "./workspaces";
+import { instructorApplications } from "./instructor-applications";
 
 export const usersRelations = relations(users, ({ one, many }) => ({
   refreshTokens: many(refreshTokens),
@@ -24,7 +25,25 @@ export const usersRelations = relations(users, ({ one, many }) => ({
     relationName: "workspaceMembers",
   }),
   ownedWorkspaces: many(workspaces, { relationName: "workspaceOwner" }),
+  instructorApplications: many(instructorApplications, {
+    relationName: "applicant",
+  }),
 }));
+
+export const instructorApplicationsRelations = relations(
+  instructorApplications,
+  ({ one }) => ({
+    user: one(users, {
+      fields: [instructorApplications.userId],
+      references: [users.id],
+      relationName: "applicant",
+    }),
+    reviewer: one(users, {
+      fields: [instructorApplications.reviewedBy],
+      references: [users.id],
+    }),
+  }),
+);
 
 export const workspacesRelations = relations(workspaces, ({ one, many }) => ({
   owner: one(users, {
