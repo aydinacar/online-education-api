@@ -15,6 +15,13 @@
       "when": 1778527856532,
       "tag": "0001_cold_wendigo",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1778701539081,
+      "tag": "0002_supreme_union_jack",
+      "breakpoints": true
     }
   ]
 }

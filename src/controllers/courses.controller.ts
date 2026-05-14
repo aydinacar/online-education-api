@@ -19,9 +19,26 @@ export const coursesController = {
     sendSuccess(res, { data: course });
   },
 
+  getById: async (req: Request<{ id: string }>, res: Response) => {
+    const course = await coursesService.getById(req.params.id);
+    sendSuccess(res, { data: course });
+  },
+
+  getCurriculum: async (req: Request<{ id: string }>, res: Response) => {
+    if (!req.user) throw ApiError.unauthorized();
+    const data = await coursesService.getCurriculum(req.params.id, req.user);
+    sendSuccess(res, { data });
+  },
+
   myCourses: async (req: Request, res: Response) => {
     if (!req.user) throw ApiError.unauthorized();
     const data = await enrollmentsService.myCourses(req.user.id);
+    sendSuccess(res, { data });
+  },
+
+  teaching: async (req: Request, res: Response) => {
+    if (!req.user) throw ApiError.unauthorized();
+    const data = await coursesService.listByInstructor(req.user.id);
     sendSuccess(res, { data });
   },
 

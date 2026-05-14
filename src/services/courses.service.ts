@@ -1,6 +1,6 @@
 import { eq, and, desc, asc, ilike, gte, lte, count, sql, type SQL } from "drizzle-orm";
 import { db } from "@/config/database";
-import { courses, categories, users, workspaces } from "@/db/schema";
+import { courses, categories, users, workspaces, sections, lessons } from "@/db/schema";
 import { ApiError } from "@/utils/api-error";
 import { slugify } from "@/utils/slugify";
 import { getPagination, buildPaginationMeta } from "@/utils/pagination";
@@ -94,6 +94,97 @@ export const coursesService = {
         workspace: row.workspace,
       })),
       meta: buildPaginationMeta(page, limit, Number(total)),
+    };
+  },
+
+  async listByInstructor(instructorId: string) {
+    const data = await db
+      .select({
+        course: courses,
+        category: categories,
+        workspace: {
+          id: workspaces.id,
+          name: workspaces.name,
+          slug: workspaces.slug,
+        },
+      })
+      .from(courses)
+      .leftJoin(categories, eq(courses.categoryId, categories.id))
+      .leftJoin(workspaces, eq(courses.workspaceId, workspaces.id))
+      .where(eq(courses.instructorId, instructorId))
+      .orderBy(desc(courses.updatedAt));
+
+    return data.map((row) => ({
+      ...row.course,
+      category: row.category,
+      workspace: row.workspace,
+    }));
+  },
+
+  async getById(id: string) {
+    const [row] = await db
+      .select({
+        course: courses,
+        category: categories,
+        instructor: {
+          id: users.id,
+          name: users.name,
+          avatar: users.avatar,
+          headline: users.headline,
+        },
+        workspace: {
+          id: workspaces.id,
+          name: workspaces.name,
+          slug: workspaces.slug,
+        },
+      })
+      .from(courses)
+      .leftJoin(categories, eq(courses.categoryId, categories.id))
+      .leftJoin(users, eq(courses.instructorId, users.id))
+      .leftJoin(workspaces, eq(courses.workspaceId, workspaces.id))
+      .where(eq(courses.id, id))
+      .limit(1);
+
+    if (!row) throw ApiError.notFound("Kurs bulunamadı");
+
+    return {
+      ...row.course,
+      category: row.category,
+      instructor: row.instructor,
+      workspace: row.workspace,
+    };
+  },
+
+  async getCurriculum(courseId: string, actor: { id: string; role: Role }) {
+    const [course] = await db
+      .select({ id: courses.id, instructorId: courses.instructorId })
+      .from(courses)
+      .where(eq(courses.id, courseId))
+      .limit(1);
+
+    if (!course) throw ApiError.notFound("Kurs bulunamadı");
+    if (course.instructorId !== actor.id && actor.role !== "admin") {
+      throw ApiError.forbidden("Bu kursu görüntüleme yetkiniz yok");
+    }
+
+    const sectionRows = await db
+      .select()
+      .from(sections)
+      .where(eq(sections.courseId, courseId))
+      .orderBy(asc(sections.order), asc(sections.createdAt));
+
+    const lessonRows = await db
+      .select()
+      .from(lessons)
+      .where(eq(lessons.courseId, courseId))
+      .orderBy(asc(lessons.order), asc(lessons.createdAt));
+
+    return {
+      sections: sectionRows.map((s) => ({
+        ...s,
+        lessons: lessonRows.filter((l) => l.sectionId === s.id),
+      })),
+      unassignedLessons: lessonRows.filter((l) => l.sectionId === null),
     };
   },
 
@@ -264,6 +355,11 @@ export const coursesService = {
     if (!existing) throw ApiError.notFound("Kurs bulunamadı");
     if (existing.instructorId !== actor.id && actor.role !== "admin") {
       throw ApiError.forbidden("Bu kursu silme yetkiniz yok");
+    }
+    if (existing.isPublished && actor.role !== "admin") {
+      throw ApiError.forbidden(
+        "Yayındaki kurs silinemez. Önce yayından kaldırın.",
+      );
     }
     await db.delete(courses).where(eq(courses.id, id));
   },

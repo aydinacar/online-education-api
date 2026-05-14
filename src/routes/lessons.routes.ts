@@ -9,6 +9,7 @@ import {
   createLessonSchema,
   updateLessonSchema,
   updateProgressSchema,
+  reorderLessonsSchema,
 } from "@/validations/lesson.schema";
 import { idParamSchema } from "@/validations/common.schema";
 import { ROLES } from "@/config/constants";
@@ -20,6 +21,14 @@ router.get(
   authenticate,
   validate(z.object({ params: idParamSchema })),
   asyncHandler(lessonsController.getById),
+);
+
+router.post(
+  "/reorder",
+  authenticate,
+  requireRole(ROLES.INSTRUCTOR, ROLES.ADMIN),
+  validate(reorderLessonsSchema),
+  asyncHandler(lessonsController.reorder),
 );
 
 router.post(

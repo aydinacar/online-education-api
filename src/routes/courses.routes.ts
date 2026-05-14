@@ -26,6 +26,31 @@ router.get(
 // Authenticated user'ın kayıtlı olduğu kurslar
 router.get("/my", authenticate, asyncHandler(coursesController.myCourses));
 
+// Instructor'ın kendi oluşturduğu kurslar (draft dahil)
+router.get(
+  "/teaching",
+  authenticate,
+  requireRole(ROLES.INSTRUCTOR, ROLES.ADMIN),
+  asyncHandler(coursesController.teaching),
+);
+
+// ID ile fetch (instructor edit akışı için)
+router.get(
+  "/id/:id",
+  authenticate,
+  validate(z.object({ params: idParamSchema })),
+  asyncHandler(coursesController.getById),
+);
+
+// Curriculum (sections + lessons + unassigned) — sadece kurs sahibi/admin
+router.get(
+  "/id/:id/curriculum",
+  authenticate,
+  requireRole(ROLES.INSTRUCTOR, ROLES.ADMIN),
+  validate(z.object({ params: idParamSchema })),
+  asyncHandler(coursesController.getCurriculum),
+);
+
 router.get(
   "/:slug",
   validate(z.object({ params: slugParamSchema })),

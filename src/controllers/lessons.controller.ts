@@ -32,6 +32,12 @@ export const lessonsController = {
     sendNoContent(res);
   },
 
+  reorder: async (req: Request, res: Response) => {
+    if (!req.user) throw ApiError.unauthorized();
+    const data = await lessonsService.reorder(req.body, req.user);
+    sendSuccess(res, { data });
+  },
+
   markCompleted: async (req: Request<{ id: string }>, res: Response) => {
     if (!req.user) throw ApiError.unauthorized();
     const progress = await lessonsService.markCompleted(req.user.id, req.params.id);

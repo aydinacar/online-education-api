@@ -9,7 +9,7 @@ export type Role = (typeof ROLES)[keyof typeof ROLES];
 export const COURSE_LEVELS = ["beginner", "intermediate", "advanced"] as const;
 export type CourseLevel = (typeof COURSE_LEVELS)[number];
 
-export const LESSON_TYPES = ["video", "article", "quiz", "assignment"] as const;
+export const LESSON_TYPES = ["video", "article", "quiz", "assignment", "live"] as const;
 export type LessonType = (typeof LESSON_TYPES)[number];
 
 export const PAYMENT_STATUS = ["pending", "completed", "failed", "refunded"] as const;
