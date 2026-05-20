@@ -11,6 +11,7 @@ import paymentsRoutes from "./payments.routes";
 import workspacesRoutes from "./workspaces.routes";
 import instructorApplicationsRoutes from "./instructor-applications.routes";
 import instructorsRoutes from "./instructors.routes";
+import quizzesRoutes from "./quizzes.routes";
 
 const router = Router();
 
@@ -30,5 +31,6 @@ router.use("/payments", paymentsRoutes);
 router.use("/workspaces", workspacesRoutes);
 router.use("/instructor-applications", instructorApplicationsRoutes);
 router.use("/instructors", instructorsRoutes);
+router.use("/quizzes", quizzesRoutes);
 
 export default router;

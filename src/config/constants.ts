@@ -15,6 +15,14 @@ export type LessonType = (typeof LESSON_TYPES)[number];
 export const PAYMENT_STATUS = ["pending", "completed", "failed", "refunded"] as const;
 export type PaymentStatus = (typeof PAYMENT_STATUS)[number];
 
+export const QUESTION_TYPES = [
+  "single_choice",
+  "multiple_choice",
+  "true_false",
+  "open_ended",
+] as const;
+export type QuestionType = (typeof QUESTION_TYPES)[number];
+
 export const PAGINATION = {
   DEFAULT_PAGE: 1,
   DEFAULT_LIMIT: 12,
