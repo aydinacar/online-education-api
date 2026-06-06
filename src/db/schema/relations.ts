@@ -8,6 +8,7 @@ import { sections } from "./sections";
 import { lessons } from "./lessons";
 import { enrollments } from "./enrollments";
 import { lessonProgress } from "./lesson-progress";
+import { certificates } from "./certificates";
 import { reviews } from "./reviews";
 import { payments } from "./payments";
 import { workspaces } from "./workspaces";
@@ -26,6 +27,7 @@ export const usersRelations = relations(users, ({ one, many }) => ({
   reviews: many(reviews),
   payments: many(payments),
   lessonProgress: many(lessonProgress),
+  certificates: many(certificates),
   workspace: one(workspaces, {
     fields: [users.workspaceId],
     references: [workspaces.id],
@@ -97,6 +99,18 @@ export const coursesRelations = relations(courses, ({ one, many }) => ({
   enrollments: many(enrollments),
   reviews: many(reviews),
   payments: many(payments),
+  certificates: many(certificates),
+}));
+
+export const certificatesRelations = relations(certificates, ({ one }) => ({
+  user: one(users, {
+    fields: [certificates.userId],
+    references: [users.id],
+  }),
+  course: one(courses, {
+    fields: [certificates.courseId],
+    references: [courses.id],
+  }),
 }));
 
 export const sectionsRelations = relations(sections, ({ one, many }) => ({

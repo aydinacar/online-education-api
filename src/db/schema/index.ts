@@ -8,6 +8,7 @@ export * from "./sections";
 export * from "./lessons";
 export * from "./enrollments";
 export * from "./lesson-progress";
+export * from "./certificates";
 export * from "./reviews";
 export * from "./payments";
 export * from "./instructor-applications";

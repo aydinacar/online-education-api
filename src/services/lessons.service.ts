@@ -2,6 +2,7 @@ import { eq, and, asc, max, inArray, isNull } from "drizzle-orm";
 import { db } from "@/config/database";
 import { lessons, sections, courses, lessonProgress } from "@/db/schema";
 import { ApiError } from "@/utils/api-error";
+import { enrollmentsService } from "./enrollments.service";
 import type { Role } from "@/config/constants";
 import type {
   CreateLessonInput,
@@ -171,31 +172,42 @@ export const lessonsService = {
   },
 
   async markCompleted(userId: string, lessonId: string) {
+    const [lesson] = await db
+      .select({ courseId: lessons.courseId })
+      .from(lessons)
+      .where(eq(lessons.id, lessonId))
+      .limit(1);
+    if (!lesson) throw ApiError.notFound("Ders bulunamadı");
+
     const [existing] = await db
       .select()
       .from(lessonProgress)
       .where(and(eq(lessonProgress.userId, userId), eq(lessonProgress.lessonId, lessonId)))
       .limit(1);
 
+    let result;
     if (existing) {
-      const [updated] = await db
+      [result] = await db
         .update(lessonProgress)
         .set({ isCompleted: true, completedAt: new Date(), lastWatchedAt: new Date() })
         .where(eq(lessonProgress.id, existing.id))
         .returning();
-      return updated;
+    } else {
+      [result] = await db
+        .insert(lessonProgress)
+        .values({
+          userId,
+          lessonId,
+          isCompleted: true,
+          completedAt: new Date(),
+        })
+        .returning();
     }
 
-    const [created] = await db
-      .insert(lessonProgress)
-      .values({
-        userId,
-        lessonId,
-        isCompleted: true,
-        completedAt: new Date(),
-      })
-      .returning();
-    return created;
+    // Kurs ilerlemesini güncelle; %100'de sertifika otomatik üretilir.
+    await enrollmentsService.recalculateProgress(userId, lesson.courseId);
+
+    return result;
   },
 
   async updateProgress(userId: string, lessonId: string, watchedSeconds: number) {
