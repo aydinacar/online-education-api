@@ -23,6 +23,9 @@ export const QUESTION_TYPES = [
 ] as const;
 export type QuestionType = (typeof QUESTION_TYPES)[number];
 
+export const VERIFICATION_TOKEN_TYPES = ["email_verification", "password_reset"] as const;
+export type VerificationTokenType = (typeof VERIFICATION_TOKEN_TYPES)[number];
+
 export const PAGINATION = {
   DEFAULT_PAGE: 1,
   DEFAULT_LIMIT: 12,

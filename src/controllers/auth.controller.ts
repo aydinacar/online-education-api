@@ -58,4 +58,41 @@ export const authController = {
     const user = await authService.me(req.user.id);
     sendSuccess(res, { data: user });
   },
+
+  forgotPassword: async (req: Request, res: Response) => {
+    await authService.requestPasswordReset(req.body.email);
+    // Her zaman aynı yanıt - e-posta varlığını sızdırma
+    sendSuccess(res, {
+      data: null,
+      message: "E-posta kayıtlıysa şifre sıfırlama bağlantısı gönderildi",
+    });
+  },
+
+  resetPassword: async (req: Request, res: Response) => {
+    await authService.resetPassword(req.body.token, req.body.password);
+    clearAuthCookies(res);
+    sendSuccess(res, { data: null, message: "Şifren güncellendi, tekrar giriş yap" });
+  },
+
+  verifyEmail: async (req: Request, res: Response) => {
+    await authService.verifyEmail(req.body.token);
+    sendSuccess(res, { data: null, message: "E-posta adresin doğrulandı" });
+  },
+
+  resendVerification: async (req: Request, res: Response) => {
+    if (!req.user) throw ApiError.unauthorized();
+    await authService.sendEmailVerification(req.user.id);
+    sendSuccess(res, { data: null, message: "Doğrulama bağlantısı gönderildi" });
+  },
+
+  changePassword: async (req: Request, res: Response) => {
+    if (!req.user) throw ApiError.unauthorized();
+    await authService.changePassword(
+      req.user.id,
+      req.body.currentPassword,
+      req.body.newPassword,
+    );
+    clearAuthCookies(res);
+    sendSuccess(res, { data: null, message: "Şifren değiştirildi, tekrar giriş yap" });
+  },
 };

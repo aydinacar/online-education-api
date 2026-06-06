@@ -22,6 +22,26 @@ const envSchema = z.object({
   JWT_REFRESH_EXPIRES_IN: z.string().default("7d"),
 
   BCRYPT_SALT_ROUNDS: z.coerce.number().min(8).max(14).default(10),
+
+  // E-posta
+  APP_NAME: z.string().default("Online Education"),
+  EMAIL_PROVIDER: z.enum(["console", "smtp", "resend"]).default("console"),
+  EMAIL_FROM: z.string().default("Online Education <no-reply@online-education.test>"),
+  // smtp provider (Mailtrap, Mailpit, Gmail vb.)
+  SMTP_HOST: z.string().optional(),
+  SMTP_PORT: z.coerce.number().optional(),
+  SMTP_SECURE: z
+    .enum(["true", "false"])
+    .default("false")
+    .transform((v) => v === "true"),
+  SMTP_USER: z.string().optional(),
+  SMTP_PASS: z.string().optional(),
+  // resend provider
+  RESEND_API_KEY: z.string().optional(),
+
+  // Doğrulama / sıfırlama token süreleri
+  EMAIL_VERIFICATION_EXPIRES_IN: z.string().default("24h"),
+  PASSWORD_RESET_EXPIRES_IN: z.string().default("1h"),
 });
 
 const parsed = envSchema.safeParse(process.env);

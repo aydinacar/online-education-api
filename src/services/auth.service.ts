@@ -4,6 +4,8 @@ import { users, type User } from "@/db/schema";
 import { hashPassword, comparePassword } from "@/utils/password";
 import { ApiError } from "@/utils/api-error";
 import { tokenService } from "./token.service";
+import { verificationService } from "./verification.service";
+import { emailService } from "./email.service";
 import type { LoginInput, RegisterInput } from "@/validations/auth.schema";
 
 export interface AuthResult {
@@ -47,6 +49,9 @@ export const authService = {
       .returning();
 
     if (!user) throw ApiError.internal("Kullanıcı oluşturulamadı");
+
+    // Doğrulama maili - akışı bloklamasın (fire-and-forget)
+    void authService.sendEmailVerification(user.id);
 
     const accessToken = tokenService.signAccessToken({
       sub: user.id,
@@ -123,5 +128,107 @@ export const authService = {
       throw ApiError.notFound("Kullanıcı bulunamadı");
     }
     return sanitize(user);
+  },
+
+  /**
+   * Verilen kullanıcı için doğrulama maili üretip gönderir.
+   * Zaten doğrulanmışsa hiçbir şey yapmaz.
+   */
+  async sendEmailVerification(userId: string): Promise<void> {
+    const [user] = await db.select().from(users).where(eq(users.id, userId)).limit(1);
+    if (!user || user.isEmailVerified) return;
+
+    const token = await verificationService.create(user.id, "email_verification");
+    await emailService.sendEmailVerification(user.email, user.name, token);
+  },
+
+  /**
+   * E-posta doğrulama token'ını tüketir, kullanıcıyı doğrulanmış işaretler.
+   */
+  async verifyEmail(token: string): Promise<void> {
+    const userId = await verificationService.consume(token, "email_verification");
+    if (!userId) {
+      throw ApiError.badRequest("Geçersiz veya süresi dolmuş doğrulama bağlantısı");
+    }
+
+    const [user] = await db
+      .update(users)
+      .set({ isEmailVerified: true, updatedAt: new Date() })
+      .where(eq(users.id, userId))
+      .returning();
+
+    if (user) {
+      await emailService.sendWelcome(user.email, user.name);
+    }
+  },
+
+  /**
+   * Şifre sıfırlama isteği. Güvenlik için e-postanın kayıtlı olup olmadığını
+   * sızdırmaz - her durumda sessizce başarılı döner.
+   */
+  async requestPasswordReset(email: string): Promise<void> {
+    const [user] = await db
+      .select()
+      .from(users)
+      .where(eq(users.email, email))
+      .limit(1);
+
+    if (!user) return;
+
+    const token = await verificationService.create(user.id, "password_reset");
+    await emailService.sendPasswordReset(user.email, user.name, token);
+  },
+
+  /**
+   * Token ile şifreyi sıfırlar, tüm oturumları sonlandırır.
+   */
+  async resetPassword(token: string, password: string): Promise<void> {
+    const userId = await verificationService.consume(token, "password_reset");
+    if (!userId) {
+      throw ApiError.badRequest("Geçersiz veya süresi dolmuş sıfırlama bağlantısı");
+    }
+
+    const passwordHash = await hashPassword(password);
+    const [user] = await db
+      .update(users)
+      .set({ passwordHash, updatedAt: new Date() })
+      .where(eq(users.id, userId))
+      .returning();
+
+    // Şifre değişti - tüm refresh token'ları iptal et
+    await tokenService.revokeAllUserTokens(userId);
+
+    if (user) {
+      await emailService.sendPasswordChanged(user.email, user.name);
+    }
+  },
+
+  /**
+   * Giriş yapmış kullanıcının mevcut şifresini doğrulayıp yenisiyle değiştirir.
+   * Diğer oturumları sonlandırır.
+   */
+  async changePassword(
+    userId: string,
+    currentPassword: string,
+    newPassword: string,
+  ): Promise<void> {
+    const [user] = await db.select().from(users).where(eq(users.id, userId)).limit(1);
+    if (!user) {
+      throw ApiError.notFound("Kullanıcı bulunamadı");
+    }
+
+    const ok = await comparePassword(currentPassword, user.passwordHash);
+    if (!ok) {
+      throw ApiError.badRequest("Mevcut şifre hatalı");
+    }
+
+    const passwordHash = await hashPassword(newPassword);
+    await db
+      .update(users)
+      .set({ passwordHash, updatedAt: new Date() })
+      .where(eq(users.id, userId));
+
+    await tokenService.revokeAllUserTokens(userId);
+    await emailService.sendPasswordChanged(user.email, user.name);
   },
 };
