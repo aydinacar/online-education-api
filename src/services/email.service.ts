@@ -2,10 +2,6 @@ import { emailProvider, type EmailMessage } from "@/config/email";
 import { env } from "@/config/env";
 import { logger } from "@/utils/logger";
 
-/**
- * Tüm e-postaları saran basit HTML iskeleti.
- * İçeriği (body) ve isteğe bağlı bir call-to-action butonunu alır.
- */
 function layout(opts: {
   heading: string;
   body: string;
@@ -38,7 +34,6 @@ async function send(message: EmailMessage): Promise<void> {
   try {
     await emailProvider.send(message);
   } catch (error) {
-    // Mail gönderimi kullanıcı akışını bloklamamalı - logla ve geç.
     logger.error("E-posta gönderilemedi", { to: message.to, error });
   }
 }

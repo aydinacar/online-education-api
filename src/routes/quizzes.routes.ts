@@ -15,7 +15,6 @@ import { ROLES } from "@/config/constants";
 
 const router = Router();
 
-// Ders bazlı erişim (öğrenci + eğitmen)
 router.get(
   "/by-lesson/:lessonId",
   authenticate,
@@ -49,7 +48,6 @@ router.delete(
   asyncHandler(quizzesController.delete),
 );
 
-// Attempts
 router.post(
   "/:id/attempts",
   authenticate,

@@ -40,7 +40,6 @@ export const reviewsService = {
   },
 
   async create(userId: string, input: CreateReviewInput) {
-    // Sadece enroll olmuş kullanıcı review yazabilir
     const [enrollment] = await db
       .select()
       .from(enrollments)
@@ -98,5 +97,4 @@ export const reviewsService = {
   },
 };
 
-// silence "sql" import warning (kullanılabilir ileride)
 void sql;

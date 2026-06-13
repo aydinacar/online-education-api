@@ -2,10 +2,6 @@ import { pgTable, uuid, varchar, timestamp, uniqueIndex, index } from "drizzle-o
 import { users } from "./users";
 import { courses } from "./courses";
 
-/**
- * Kurs tamamlanınca üretilen sertifikalar.
- * certificateNumber genel doğrulama için kullanılan benzersiz, paylaşılabilir koddur.
- */
 export const certificates = pgTable(
   "certificates",
   {

@@ -28,12 +28,11 @@ export const lessons = pgTable(
     title: varchar("title", { length: 200 }).notNull(),
     type: lessonTypeEnum("type").notNull().default("video"),
     order: integer("order").notNull().default(0),
-    duration: integer("duration").notNull().default(0), // saniye
+    duration: integer("duration").notNull().default(0),
     videoUrl: text("video_url"),
-    content: text("content"), // article için markdown
-    isFree: boolean("is_free").notNull().default(false), // önizleme
+    content: text("content"),
+    isFree: boolean("is_free").notNull().default(false),
 
-    // Canlı ders alanları (type = 'live' iken kullanılır)
     scheduledAt: timestamp("scheduled_at"),
     meetingUrl: text("meeting_url"),
     recordingUrl: text("recording_url"),

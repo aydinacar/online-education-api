@@ -10,14 +10,12 @@ import {
 
 const router = Router();
 
-// Genel doğrulama - auth yok
 router.get(
   "/:number/verify",
   validate(certificateNumberParamSchema),
   asyncHandler(certificatesController.verify),
 );
 
-// Bundan sonrası auth gerektirir
 router.use(authenticate);
 
 router.get("/my", asyncHandler(certificatesController.myCertificates));

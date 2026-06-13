@@ -31,7 +31,6 @@ export const instructorApplications = pgTable(
       .notNull()
       .references(() => users.id, { onDelete: "cascade" }),
 
-    // Başvuru içeriği
     headline: varchar("headline", { length: 200 }).notNull(),
     bio: text("bio").notNull(),
     expertiseAreas: text("expertise_areas").array().notNull(),
@@ -40,7 +39,6 @@ export const instructorApplications = pgTable(
     sampleSyllabus: text("sample_syllabus"),
     portfolioUrl: text("portfolio_url"),
 
-    // Karar
     status: instructorApplicationStatusEnum("status").notNull().default("pending"),
     reviewNote: text("review_note"),
     reviewedBy: uuid("reviewed_by").references(() => users.id, {

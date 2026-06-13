@@ -1,10 +1,3 @@
-/**
- * Throw atılabilen, error middleware'in HTTP response'a çevirdiği error sınıfı.
- *
- * Kullanım:
- *   throw new ApiError(404, "Kurs bulunamadı");
- *   throw new ApiError(400, "Validasyon hatası", errors);
- */
 export class ApiError extends Error {
   public readonly statusCode: number;
   public readonly errors?: Record<string, string[]>;

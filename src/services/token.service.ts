@@ -7,14 +7,14 @@ import type { Role } from "@/config/constants";
 import { ApiError } from "@/utils/api-error";
 
 export interface AccessTokenPayload {
-  sub: string; // user id
+  sub: string;
   email: string;
   role: Role;
 }
 
 export interface RefreshTokenPayload {
   sub: string;
-  jti: string; // refresh_tokens.id - DB lookup için
+  jti: string;
 }
 
 interface RefreshTokenContext {
@@ -22,14 +22,10 @@ interface RefreshTokenContext {
   ipAddress?: string;
 }
 
-/**
- * "7d" gibi bir string'i ms cinsine çevirir.
- * jwt'nin kabul ettiği format - cookie expiry vs için.
- */
 function expiresInMs(input: string): number {
   const match = input.match(/^(\d+)([smhd])$/);
   if (!match || !match[1] || !match[2]) {
-    return 7 * 24 * 60 * 60 * 1000; // default 7 gün
+    return 7 * 24 * 60 * 60 * 1000;
   }
   const value = parseInt(match[1], 10);
   const unit = match[2];
@@ -53,20 +49,14 @@ export const tokenService = {
     return jwt.verify(token, env.JWT_ACCESS_SECRET) as AccessTokenPayload;
   },
 
-  /**
-   * Refresh token üretir VE DB'ye kaydeder.
-   * Token'ın kendisi JWT, ama jti'si DB'deki kayda işaret eder
-   * - bu sayede revoke edebiliyoruz.
-   */
   async issueRefreshToken(userId: string, ctx?: RefreshTokenContext): Promise<string> {
     const expiresAt = new Date(Date.now() + expiresInMs(env.JWT_REFRESH_EXPIRES_IN));
 
-    // Önce DB kaydı oluştur ki id'sini jti olarak kullanalım
     const [record] = await db
       .insert(refreshTokens)
       .values({
         userId,
-        token: "", // birazdan update
+        token: "",
         expiresAt,
         userAgent: ctx?.userAgent,
         ipAddress: ctx?.ipAddress,
@@ -87,11 +77,6 @@ export const tokenService = {
     return token;
   },
 
-  /**
-   * Refresh token'ı doğrula:
-   * 1. JWT geçerli mi?
-   * 2. DB'de var mı, revoke edilmemiş mi, expire olmamış mı?
-   */
   async verifyRefreshToken(token: string): Promise<{ userId: string; tokenId: string }> {
     let payload: RefreshTokenPayload;
     try {
@@ -119,10 +104,6 @@ export const tokenService = {
     return { userId: record.userId, tokenId: record.id };
   },
 
-  /**
-   * Token rotation: eski refresh'i iptal et, yenisini ver.
-   * /auth/refresh çağrısında kullanılır.
-   */
   async rotateRefreshToken(
     oldTokenId: string,
     userId: string,
@@ -136,9 +117,6 @@ export const tokenService = {
     return this.issueRefreshToken(userId, ctx);
   },
 
-  /**
-   * Logout - tek bir token'ı revoke et.
-   */
   async revokeRefreshToken(tokenId: string): Promise<void> {
     await db
       .update(refreshTokens)
@@ -146,9 +124,6 @@ export const tokenService = {
       .where(eq(refreshTokens.id, tokenId));
   },
 
-  /**
-   * "Tüm cihazlardan çıkış yap" - şifre değişiminde de kullanılır.
-   */
   async revokeAllUserTokens(userId: string): Promise<void> {
     await db
       .update(refreshTokens)

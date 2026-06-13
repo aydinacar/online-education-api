@@ -12,7 +12,7 @@ export const enrollments = pgTable(
     courseId: uuid("course_id")
       .notNull()
       .references(() => courses.id, { onDelete: "cascade" }),
-    progress: integer("progress").notNull().default(0), // 0-100
+    progress: integer("progress").notNull().default(0),
     completedAt: timestamp("completed_at"),
     enrolledAt: timestamp("enrolled_at").notNull().defaultNow(),
   },

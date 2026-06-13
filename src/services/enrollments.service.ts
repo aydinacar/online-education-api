@@ -27,8 +27,6 @@ export const enrollmentsService = {
       throw ApiError.conflict("Bu kursa zaten kayıtlısınız");
     }
 
-    // Ücretliyse normalde önce payment akışı tamamlanmalı.
-    // Şimdilik direkt enroll edelim - payment service ileride bu service'i çağırır.
     const [enrollment] = await db
       .insert(enrollments)
       .values({ userId, courseId })
@@ -76,11 +74,6 @@ export const enrollmentsService = {
     return !!row;
   },
 
-  /**
-   * Tamamlanan ders sayısına göre enrollment ilerlemesini yeniden hesaplar.
-   * %100'e ulaşıldığında completedAt'i set eder ve sertifika üretir.
-   * Bir ders tamamlandığında lessons.markCompleted'tan çağrılır.
-   */
   async recalculateProgress(userId: string, courseId: string) {
     const [enrollment] = await db
       .select()

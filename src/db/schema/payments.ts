@@ -18,7 +18,7 @@ export const payments = pgTable(
     amount: numeric("amount", { precision: 10, scale: 2 }).notNull(),
     currency: varchar("currency", { length: 3 }).notNull().default("TRY"),
     status: paymentStatusEnum("status").notNull().default("pending"),
-    providerPaymentId: varchar("provider_payment_id", { length: 200 }), // Stripe/iyzico ref
+    providerPaymentId: varchar("provider_payment_id", { length: 200 }),
     paidAt: timestamp("paid_at"),
     createdAt: timestamp("created_at").notNull().defaultNow(),
     updatedAt: timestamp("updated_at").notNull().defaultNow(),

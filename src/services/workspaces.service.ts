@@ -12,7 +12,6 @@ import type {
 async function generateUniqueSlug(base: string): Promise<string> {
   let slug = base;
   let i = 2;
-  // Loop bounded by candidate iteration; realistic collisions are tiny.
   while (true) {
     const [existing] = await db
       .select({ id: workspaces.id })
@@ -26,9 +25,6 @@ async function generateUniqueSlug(base: string): Promise<string> {
 }
 
 export const workspacesService = {
-  /**
-   * Admin: list all workspaces (with owner basic info).
-   */
   async list() {
     return db
       .select({
@@ -49,11 +45,6 @@ export const workspacesService = {
       .orderBy(asc(workspaces.name));
   },
 
-  /**
-   * Caller creates a workspace and becomes its owner.
-   * Caller must not already belong to a workspace.
-   * Promotes caller from `student` to `instructor` (admin role is left intact).
-   */
   async create(callerId: string, input: CreateWorkspaceInput) {
     const [caller] = await db
       .select()
@@ -140,10 +131,6 @@ export const workspacesService = {
     return w;
   },
 
-  /**
-   * Owner adds an existing user (by email) to the workspace as an instructor.
-   * Target user must not belong to another workspace.
-   */
   async addMember(workspaceId: string, email: string, callerId: string) {
     const workspace = await this.getById(workspaceId);
     if (workspace.ownerId !== callerId) {
@@ -182,10 +169,6 @@ export const workspacesService = {
     return updated;
   },
 
-  /**
-   * Owner removes a member from the workspace. Owner cannot remove self
-   * (must transferOwnership first). Removed user is reset to `student`.
-   */
   async removeMember(workspaceId: string, userId: string, callerId: string) {
     const workspace = await this.getById(workspaceId);
     if (workspace.ownerId !== callerId) {
@@ -214,10 +197,6 @@ export const workspacesService = {
       .where(eq(users.id, userId));
   },
 
-  /**
-   * Owner transfers ownership to another member of the same workspace.
-   * Previous owner stays in the workspace as an instructor.
-   */
   async transferOwnership(
     workspaceId: string,
     newOwnerUserId: string,

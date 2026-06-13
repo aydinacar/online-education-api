@@ -19,7 +19,6 @@ router.get(
   asyncHandler(categoriesController.getById),
 );
 
-// Sadece admin
 router.use(authenticate, requireRole(ROLES.ADMIN));
 
 router.post("/", validate(createCategorySchema), asyncHandler(categoriesController.create));

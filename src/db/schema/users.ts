@@ -32,6 +32,4 @@ export const users = pgTable(
 export type User = typeof users.$inferSelect;
 export type NewUser = typeof users.$inferInsert;
 
-// Imported after users export to avoid TS circular-init issues
-// (workspaces.ownerId references users.id; users.workspaceId references workspaces.id)
 import { workspaces } from "./workspaces";

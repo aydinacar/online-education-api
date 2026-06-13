@@ -12,7 +12,6 @@ export const createLessonSchema = z.object({
     videoUrl: z.string().url().optional(),
     content: z.string().optional(),
     isFree: z.boolean().optional(),
-    // Canlı ders alanları (type = "live")
     scheduledAt: z.coerce.date().optional(),
     meetingUrl: z.string().url().optional(),
     recordingUrl: z.string().url().optional(),

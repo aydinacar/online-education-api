@@ -50,7 +50,6 @@ export const authService = {
 
     if (!user) throw ApiError.internal("Kullanıcı oluşturulamadı");
 
-    // Doğrulama maili - akışı bloklamasın (fire-and-forget)
     void authService.sendEmailVerification(user.id);
 
     const accessToken = tokenService.signAccessToken({
@@ -89,9 +88,6 @@ export const authService = {
     return { user: sanitize(user), accessToken, refreshToken };
   },
 
-  /**
-   * Refresh token ile yeni access + yeni refresh üretir (rotation).
-   */
   async refresh(
     refreshToken: string,
     ctx?: AuthContext,
@@ -118,7 +114,6 @@ export const authService = {
       const { tokenId } = await tokenService.verifyRefreshToken(refreshToken);
       await tokenService.revokeRefreshToken(tokenId);
     } catch {
-      // Token zaten geçersiz - sessizce geç, idempotent olsun
     }
   },
 
@@ -130,10 +125,6 @@ export const authService = {
     return sanitize(user);
   },
 
-  /**
-   * Verilen kullanıcı için doğrulama maili üretip gönderir.
-   * Zaten doğrulanmışsa hiçbir şey yapmaz.
-   */
   async sendEmailVerification(userId: string): Promise<void> {
     const [user] = await db.select().from(users).where(eq(users.id, userId)).limit(1);
     if (!user || user.isEmailVerified) return;
@@ -142,9 +133,6 @@ export const authService = {
     await emailService.sendEmailVerification(user.email, user.name, token);
   },
 
-  /**
-   * E-posta doğrulama token'ını tüketir, kullanıcıyı doğrulanmış işaretler.
-   */
   async verifyEmail(token: string): Promise<void> {
     const userId = await verificationService.consume(token, "email_verification");
     if (!userId) {
@@ -162,10 +150,6 @@ export const authService = {
     }
   },
 
-  /**
-   * Şifre sıfırlama isteği. Güvenlik için e-postanın kayıtlı olup olmadığını
-   * sızdırmaz - her durumda sessizce başarılı döner.
-   */
   async requestPasswordReset(email: string): Promise<void> {
     const [user] = await db
       .select()
@@ -179,9 +163,6 @@ export const authService = {
     await emailService.sendPasswordReset(user.email, user.name, token);
   },
 
-  /**
-   * Token ile şifreyi sıfırlar, tüm oturumları sonlandırır.
-   */
   async resetPassword(token: string, password: string): Promise<void> {
     const userId = await verificationService.consume(token, "password_reset");
     if (!userId) {
@@ -195,7 +176,6 @@ export const authService = {
       .where(eq(users.id, userId))
       .returning();
 
-    // Şifre değişti - tüm refresh token'ları iptal et
     await tokenService.revokeAllUserTokens(userId);
 
     if (user) {
@@ -203,10 +183,6 @@ export const authService = {
     }
   },
 
-  /**
-   * Giriş yapmış kullanıcının mevcut şifresini doğrulayıp yenisiyle değiştirir.
-   * Diğer oturumları sonlandırır.
-   */
   async changePassword(
     userId: string,
     currentPassword: string,

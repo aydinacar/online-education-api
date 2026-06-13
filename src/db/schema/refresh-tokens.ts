@@ -1,11 +1,6 @@
 import { pgTable, uuid, text, timestamp, boolean } from "drizzle-orm/pg-core";
 import { users } from "./users";
 
-/**
- * Refresh token'ları DB'de tutuyoruz ki:
- * - Logout'ta veya şifre değişiminde revoke edebilelim
- * - Kullanıcının aktif oturumlarını listeleyebilelim
- */
 export const refreshTokens = pgTable("refresh_tokens", {
   id: uuid("id").primaryKey().defaultRandom(),
   userId: uuid("user_id")

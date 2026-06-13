@@ -7,10 +7,6 @@ interface SuccessResponseOptions<T> {
   statusCode?: number;
 }
 
-/**
- * Tüm başarılı response'lar bu şekille döner:
- * { success: true, data: ..., message?, meta? }
- */
 export function sendSuccess<T>(
   res: Response,
   { data, message, meta, statusCode = 200 }: SuccessResponseOptions<T>,

@@ -18,7 +18,6 @@ const router = Router();
 
 router.use(authenticate);
 
-// Admin: tüm workspace'leri listele
 router.get(
   "/",
   requireRole(ROLES.ADMIN),

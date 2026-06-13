@@ -3,10 +3,6 @@ import dotenv from "dotenv";
 
 dotenv.config();
 
-/**
- * Tüm env değişkenlerini Zod ile validate ediyoruz.
- * Process başlamadan eksik/yanlış env varsa hemen patlar - prod'da sürpriz olmaz.
- */
 const envSchema = z.object({
   NODE_ENV: z.enum(["development", "test", "production"]).default("development"),
   PORT: z.coerce.number().default(4000),
@@ -23,11 +19,9 @@ const envSchema = z.object({
 
   BCRYPT_SALT_ROUNDS: z.coerce.number().min(8).max(14).default(10),
 
-  // E-posta
   APP_NAME: z.string().default("Online Education"),
   EMAIL_PROVIDER: z.enum(["console", "smtp", "resend"]).default("console"),
   EMAIL_FROM: z.string().default("Online Education <no-reply@online-education.test>"),
-  // smtp provider (Mailtrap, Mailpit, Gmail vb.)
   SMTP_HOST: z.string().optional(),
   SMTP_PORT: z.coerce.number().optional(),
   SMTP_SECURE: z
@@ -36,10 +30,8 @@ const envSchema = z.object({
     .transform((v) => v === "true"),
   SMTP_USER: z.string().optional(),
   SMTP_PASS: z.string().optional(),
-  // resend provider
   RESEND_API_KEY: z.string().optional(),
 
-  // Doğrulama / sıfırlama token süreleri
   EMAIL_VERIFICATION_EXPIRES_IN: z.string().default("24h"),
   PASSWORD_RESET_EXPIRES_IN: z.string().default("1h"),
 });

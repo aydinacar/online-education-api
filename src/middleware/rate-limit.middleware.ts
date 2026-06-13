@@ -1,10 +1,7 @@
 import rateLimit from "express-rate-limit";
 
-/**
- * Genel API rate limit - tüm /api altında.
- */
 export const apiLimiter = rateLimit({
-  windowMs: 15 * 60 * 1000, // 15 dakika
+  windowMs: 15 * 60 * 1000,
   max: 300,
   standardHeaders: true,
   legacyHeaders: false,
@@ -15,9 +12,6 @@ export const apiLimiter = rateLimit({
   },
 });
 
-/**
- * Auth endpoint'leri için daha sıkı limit (brute force koruması).
- */
 export const authLimiter = rateLimit({
   windowMs: 15 * 60 * 1000,
   max: 10,

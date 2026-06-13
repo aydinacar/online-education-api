@@ -17,17 +17,14 @@ const router = Router();
 
 router.use(authenticate);
 
-// Kendi son başvurunu görüntüle (form ekranında durum göstermek için)
 router.get("/me", asyncHandler(instructorApplicationsController.getMine));
 
-// Başvuru oluştur (login olmuş herkes — service rol kontrolü yapıyor)
 router.post(
   "/",
   validate(createInstructorApplicationSchema),
   asyncHandler(instructorApplicationsController.create),
 );
 
-// Admin endpoints
 router.use(requireRole(ROLES.ADMIN));
 
 router.get(

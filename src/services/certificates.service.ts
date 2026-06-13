@@ -4,18 +4,12 @@ import { certificates, courses, users } from "@/db/schema";
 import { ApiError } from "@/utils/api-error";
 import { randomToken } from "@/utils/crypto";
 
-/**
- * "CERT-XXXX-XXXX" biçiminde okunabilir, benzersiz bir sertifika numarası üretir.
- */
 function generateCertificateNumber(): string {
-  const raw = randomToken(4).toUpperCase(); // 8 hex karakter
+  const raw = randomToken(4).toUpperCase();
   return `CERT-${raw.slice(0, 4)}-${raw.slice(4, 8)}`;
 }
 
 export const certificatesService = {
-  /**
-   * Kullanıcı + kurs için sertifika üretir. Idempotent - varsa mevcut olanı döner.
-   */
   async issue(userId: string, courseId: string) {
     const [existing] = await db
       .select()
@@ -25,7 +19,6 @@ export const certificatesService = {
 
     if (existing) return existing;
 
-    // Numara çakışması çok düşük ihtimal; birkaç kez dene.
     for (let attempt = 0; attempt < 5; attempt++) {
       try {
         const [created] = await db
@@ -34,7 +27,6 @@ export const certificatesService = {
           .returning();
         if (created) return created;
       } catch {
-        // unique ihlali (number veya user+course) - tekrar dene / mevcut olanı al
         const [row] = await db
           .select()
           .from(certificates)
@@ -47,9 +39,6 @@ export const certificatesService = {
     throw ApiError.internal("Sertifika oluşturulamadı");
   },
 
-  /**
-   * Kullanıcının sertifikaları (kurs + eğitmen bilgisiyle).
-   */
   async listByUser(userId: string) {
     const rows = await db
       .select({
@@ -76,9 +65,6 @@ export const certificatesService = {
     return rows;
   },
 
-  /**
-   * Numara ile genel doğrulama. Kullanıcı adı, kurs ve tarih döner.
-   */
   async getByNumber(certificateNumber: string) {
     const [row] = await db
       .select({
@@ -101,9 +87,6 @@ export const certificatesService = {
     return row;
   },
 
-  /**
-   * Belirli bir kurs için kullanıcının sertifikasını döner (yoksa null).
-   */
   async getByUserAndCourse(userId: string, courseId: string) {
     const [row] = await db
       .select()

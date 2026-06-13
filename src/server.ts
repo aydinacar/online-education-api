@@ -9,10 +9,6 @@ const server = app.listen(env.PORT, () => {
   logger.info(`Environment: ${env.NODE_ENV}`);
 });
 
-/**
- * Graceful shutdown - SIGTERM/SIGINT geldiğinde mevcut istekleri tamamla, sonra kapan.
- * PM2/Docker düzgün restart edebilsin diye önemli.
- */
 function shutdown(signal: string) {
   logger.info(`${signal} alındı, server kapatılıyor...`);
   server.close((err) => {
@@ -24,7 +20,6 @@ function shutdown(signal: string) {
     process.exit(0);
   });
 
-  // 10 saniye sonra zorla kapan
   setTimeout(() => {
     logger.error("Zorla kapatılıyor (timeout)");
     process.exit(1);

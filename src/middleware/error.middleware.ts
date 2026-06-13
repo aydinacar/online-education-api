@@ -3,10 +3,6 @@ import { ApiError } from "@/utils/api-error";
 import { logger } from "@/utils/logger";
 import { env } from "@/config/env";
 
-/**
- * Tüm hataların buluştuğu yer. ApiError ise tip-zengin response, değilse 500.
- * Stack trace'i sadece development'ta dönüyoruz.
- */
 export const errorHandler = (err: Error, req: Request, res: Response, _next: NextFunction) => {
   if (err instanceof ApiError) {
     if (!err.isOperational) {
@@ -21,7 +17,6 @@ export const errorHandler = (err: Error, req: Request, res: Response, _next: Nex
     });
   }
 
-  // Beklenmeyen hata
   logger.error("Beklenmeyen hata", {
     message: err.message,
     stack: err.stack,

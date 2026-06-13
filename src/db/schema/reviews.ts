@@ -12,13 +12,12 @@ export const reviews = pgTable(
     courseId: uuid("course_id")
       .notNull()
       .references(() => courses.id, { onDelete: "cascade" }),
-    rating: integer("rating").notNull(), // 1-5, validation Zod'da
+    rating: integer("rating").notNull(),
     comment: text("comment"),
     createdAt: timestamp("created_at").notNull().defaultNow(),
     updatedAt: timestamp("updated_at").notNull().defaultNow(),
   },
   (table) => ({
-    // Bir kullanıcı bir kursa tek review yazsın
     userCourseUnique: uniqueIndex("reviews_user_course_unique").on(table.userId, table.courseId),
   }),
 );

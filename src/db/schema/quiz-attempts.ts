@@ -19,7 +19,7 @@ export const quizAttempts = pgTable(
     quizId: uuid("quiz_id")
       .notNull()
       .references(() => quizzes.id, { onDelete: "cascade" }),
-    score: integer("score"), // yüzde (0-100), submit edilince yazılır
+    score: integer("score"),
     earnedPoints: integer("earned_points"),
     totalPoints: integer("total_points"),
     passed: boolean("passed"),

@@ -49,7 +49,6 @@ export const usersService = {
       .set({ passwordHash, updatedAt: new Date() })
       .where(eq(users.id, userId));
 
-    // Şifre değiştiğinde tüm refresh token'ları iptal et
     await tokenService.revokeAllUserTokens(userId);
   },
 };

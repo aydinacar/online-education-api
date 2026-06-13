@@ -77,7 +77,6 @@ export const lessonsService = {
       await assertSectionBelongsToCourse(input.sectionId, input.courseId);
     }
 
-    // Order verilmemişse aynı section (veya unassigned havuzu) içinde en sona ekle
     let order = input.order;
     if (order === undefined) {
       const [row] = await db
@@ -204,7 +203,6 @@ export const lessonsService = {
         .returning();
     }
 
-    // Kurs ilerlemesini güncelle; %100'de sertifika otomatik üretilir.
     await enrollmentsService.recalculateProgress(userId, lesson.courseId);
 
     return result;

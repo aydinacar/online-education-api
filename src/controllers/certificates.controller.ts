@@ -11,10 +11,6 @@ export const certificatesController = {
     sendSuccess(res, { data });
   },
 
-  /**
-   * Belirli kurs için kullanıcının sertifikası. Tamamlanmış ama henüz
-   * üretilmemişse (eski kayıtlar için) burada üretilir.
-   */
   myCourseCertificate: async (req: Request<{ courseId: string }>, res: Response) => {
     if (!req.user) throw ApiError.unauthorized();
     await enrollmentsService.recalculateProgress(req.user.id, req.params.courseId);
@@ -26,9 +22,6 @@ export const certificatesController = {
     sendSuccess(res, { data: cert });
   },
 
-  /**
-   * Genel doğrulama - auth gerektirmez.
-   */
   verify: async (req: Request<{ number: string }>, res: Response) => {
     const data = await certificatesService.getByNumber(req.params.number);
     sendSuccess(res, { data });

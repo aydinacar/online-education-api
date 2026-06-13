@@ -17,7 +17,6 @@ router.get("/my", asyncHandler(paymentsController.myPayments));
 
 router.post("/", validate(createPaymentSchema), asyncHandler(paymentsController.create));
 
-// Webhook veya admin için status güncelleme
 router.patch(
   "/:id/status",
   requireRole(ROLES.ADMIN),

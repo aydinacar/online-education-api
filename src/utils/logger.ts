@@ -1,7 +1,3 @@
-/**
- * Şimdilik basit console wrapper.
- * İleride Pino/Winston'a geçince sadece bu dosyayı değiştirmek yeter.
- */
 
 const timestamp = () => new Date().toISOString();
 

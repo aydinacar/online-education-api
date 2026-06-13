@@ -61,7 +61,6 @@ export const authController = {
 
   forgotPassword: async (req: Request, res: Response) => {
     await authService.requestPasswordReset(req.body.email);
-    // Her zaman aynı yanıt - e-posta varlığını sızdırma
     sendSuccess(res, {
       data: null,
       message: "E-posta kayıtlıysa şifre sıfırlama bağlantısı gönderildi",

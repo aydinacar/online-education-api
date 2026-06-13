@@ -23,9 +23,6 @@ import type {
 
 type CourseRow = typeof courses.$inferSelect;
 
-/**
- * pg driver `numeric` kolonları string olarak döner; API'de number garantilemek için coerce ederiz.
- */
 function serializeCourse<T extends CourseRow>(row: T): Omit<T, "price" | "rating"> & {
   price: number;
   rating: number;
@@ -45,7 +42,6 @@ export const coursesService = {
     });
 
     const where: SQL[] = [];
-    // Admin draft kursları da görür; diğer herkese sadece published
     if (viewer?.role !== "admin") {
       where.push(eq(courses.isPublished, true));
     }
@@ -244,7 +240,6 @@ export const coursesService = {
     const isOwner = !!viewer && row.course.instructorId === viewer.id;
     const isAdmin = viewer?.role === "admin";
 
-    // Yayında değilse yalnızca owner / admin görebilir
     if (!row.course.isPublished && !isOwner && !isAdmin) {
       throw ApiError.notFound("Kurs bulunamadı");
     }
@@ -282,7 +277,6 @@ export const coursesService = {
 
     const canSeeContent = isEnrolled || isOwner || isAdmin;
 
-    // Enrolled kullanıcı için per-lesson progress'i tek query'de getir
     let progressByLesson: Record<string, { isCompleted: boolean; watchedSeconds: number }> = {};
     if (viewer && lessonRows.length > 0) {
       const progressRows = await db
@@ -450,7 +444,6 @@ export const coursesService = {
     const [existing] = await db.select().from(courses).where(eq(courses.id, id)).limit(1);
     if (!existing) throw ApiError.notFound("Kurs bulunamadı");
 
-    // Sahibi veya admin değilse yasak
     if (existing.instructorId !== actor.id && actor.role !== "admin") {
       throw ApiError.forbidden("Bu kursu düzenleme yetkiniz yok");
     }

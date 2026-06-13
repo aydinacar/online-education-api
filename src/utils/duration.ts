@@ -1,7 +1,3 @@
-/**
- * "7d", "15m", "1h" gibi bir süre string'ini milisaniyeye çevirir.
- * jwt/cookie/token expiry hesabında ortak kullanılır.
- */
 export function expiresInMs(input: string, fallbackMs = 7 * 24 * 60 * 60 * 1000): number {
   const match = input.match(/^(\d+)([smhd])$/);
   if (!match || !match[1] || !match[2]) {

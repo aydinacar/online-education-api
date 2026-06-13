@@ -8,12 +8,6 @@ import type {
   UpdatePaymentStatusInput,
 } from "@/validations/payment.schema";
 
-/**
- * Şimdilik gerçek bir ödeme provider'ı entegre edilmedi.
- * Stripe/iyzico geldiğinde:
- * - createIntent: provider'da intent yarat, providerPaymentId'yi kaydet
- * - webhook handler: status'u "completed" yap, enrollment yarat
- */
 export const paymentsService = {
   async listByUser(userId: string) {
     return db
@@ -37,10 +31,6 @@ export const paymentsService = {
     return payment;
   },
 
-  /**
-   * Webhook'tan veya admin panelden çağrılır.
-   * Tamamlandıysa enrollment yarat.
-   */
   async updateStatus(id: string, input: UpdatePaymentStatusInput) {
     const [payment] = await db
       .update(payments)

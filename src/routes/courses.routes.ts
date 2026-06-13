@@ -15,7 +15,6 @@ import { ROLES } from "@/config/constants";
 
 const router = Router();
 
-// Public (admin token varsa draft kurslar da listelenir)
 router.get(
   "/",
   optionalAuthenticate,
@@ -23,10 +22,8 @@ router.get(
   asyncHandler(coursesController.list),
 );
 
-// Authenticated user'ın kayıtlı olduğu kurslar
 router.get("/my", authenticate, asyncHandler(coursesController.myCourses));
 
-// Instructor'ın kendi oluşturduğu kurslar (draft dahil)
 router.get(
   "/teaching",
   authenticate,
@@ -34,7 +31,6 @@ router.get(
   asyncHandler(coursesController.teaching),
 );
 
-// ID ile fetch (instructor edit akışı için)
 router.get(
   "/id/:id",
   authenticate,
@@ -42,7 +38,6 @@ router.get(
   asyncHandler(coursesController.getById),
 );
 
-// Curriculum (sections + lessons + unassigned) — sadece kurs sahibi/admin
 router.get(
   "/id/:id/curriculum",
   authenticate,
@@ -58,7 +53,6 @@ router.get(
   asyncHandler(coursesController.getBySlug),
 );
 
-// Eğitmen / admin
 router.post(
   "/",
   authenticate,
@@ -83,7 +77,6 @@ router.delete(
   asyncHandler(coursesController.delete),
 );
 
-// Enrollment
 router.post(
   "/:id/enroll",
   authenticate,

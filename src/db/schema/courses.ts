@@ -29,11 +29,10 @@ export const courses = pgTable(
     level: courseLevelEnum("level").notNull().default("beginner"),
     price: numeric("price", { precision: 10, scale: 2 }).notNull().default("0"),
 
-    // Denormalize edilmiş istatistikler (her okumada JOIN/COUNT yapmamak için)
     studentCount: integer("student_count").notNull().default(0),
     reviewCount: integer("review_count").notNull().default(0),
     rating: numeric("rating", { precision: 3, scale: 2 }).notNull().default("0"),
-    totalDuration: integer("total_duration").notNull().default(0), // saniye
+    totalDuration: integer("total_duration").notNull().default(0),
     lessonCount: integer("lesson_count").notNull().default(0),
 
     isPublished: boolean("is_published").notNull().default(false),
@@ -49,8 +48,6 @@ export const courses = pgTable(
       .notNull()
       .references(() => workspaces.id, { onDelete: "restrict" }),
 
-    // JSON kolonlar yerine basit metin dizileri için ayrı tablo da yapılabilir;
-    // şimdilik text array kullanıyoruz
     whatYouWillLearn: text("what_you_will_learn").array(),
     requirements: text("requirements").array(),
 

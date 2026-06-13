@@ -12,11 +12,6 @@ const EXPIRY_BY_TYPE: Record<VerificationTokenType, string> = {
 };
 
 export const verificationService = {
-  /**
-   * Belirli tip için yeni bir token üretir, hash'ini DB'ye yazar,
-   * ham token'ı döner (mail'le gönderilmek üzere).
-   * Aynı tipteki önceki kullanılmamış token'lar geçersiz kılınır.
-   */
   async create(userId: string, type: VerificationTokenType): Promise<string> {
     await db
       .update(verificationTokens)
@@ -42,10 +37,6 @@ export const verificationService = {
     return token;
   },
 
-  /**
-   * Ham token'ı doğrular ve tek kullanımlık olarak tüketir.
-   * Geçerliyse ilgili userId döner, değilse null.
-   */
   async consume(token: string, type: VerificationTokenType): Promise<string | null> {
     const tokenHash = sha256(token);
 

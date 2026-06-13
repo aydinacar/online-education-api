@@ -1,6 +1,5 @@
 import { z } from "zod";
 
-// Tüm şifre alanları için ortak kural
 const passwordSchema = z
   .string()
   .min(8, "Şifre en az 8 karakter olmalı")

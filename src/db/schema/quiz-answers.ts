@@ -21,14 +21,12 @@ export const quizAnswers = pgTable(
     questionId: uuid("question_id")
       .notNull()
       .references(() => quizQuestions.id, { onDelete: "cascade" }),
-    // single/multiple/true_false için seçilen seçenek ID'leri
     selectedOptionIds: jsonb("selected_option_ids")
       .$type<string[]>()
       .notNull()
       .default([]),
-    // open_ended için serbest metin yanıt
     textAnswer: text("text_answer"),
-    isCorrect: boolean("is_correct"), // open_ended için manuel puanlamaya kadar null
+    isCorrect: boolean("is_correct"),
     pointsEarned: integer("points_earned").notNull().default(0),
     createdAt: timestamp("created_at").notNull().defaultNow(),
   },

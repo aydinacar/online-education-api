@@ -24,7 +24,6 @@ export const quizQuestions = pgTable(
     explanation: text("explanation"),
     points: integer("points").notNull().default(1),
     order: integer("order").notNull().default(0),
-    // open_ended sorular için referans cevap (manuel/eşleşmeli puanlama için)
     correctAnswer: text("correct_answer"),
     createdAt: timestamp("created_at").notNull().defaultNow(),
     updatedAt: timestamp("updated_at").notNull().defaultNow(),

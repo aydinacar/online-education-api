@@ -19,9 +19,9 @@ export const quizzes = pgTable(
       .references(() => lessons.id, { onDelete: "cascade" }),
     title: varchar("title", { length: 200 }).notNull(),
     description: text("description"),
-    passingScore: integer("passing_score").notNull().default(70), // yüzde
-    timeLimit: integer("time_limit"), // saniye, null = sınırsız
-    maxAttempts: integer("max_attempts"), // null = sınırsız
+    passingScore: integer("passing_score").notNull().default(70),
+    timeLimit: integer("time_limit"),
+    maxAttempts: integer("max_attempts"),
     shuffleQuestions: boolean("shuffle_questions").notNull().default(false),
     createdAt: timestamp("created_at").notNull().defaultNow(),
     updatedAt: timestamp("updated_at").notNull().defaultNow(),

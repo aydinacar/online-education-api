@@ -68,7 +68,6 @@ export const instructorApplicationsService = {
     return { ...row.application, user: row.user };
   },
 
-  /** Kullanıcının kendi son başvurusu (varsa) */
   async getMine(userId: string) {
     const [row] = await db
       .select()

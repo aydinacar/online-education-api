@@ -12,10 +12,6 @@ export interface EmailProvider {
   send(message: EmailMessage): Promise<void>;
 }
 
-/**
- * Dev / fallback: mail göndermez, sadece terminale loglar.
- * Hiçbir dış bağımlılık/anahtar gerektirmez.
- */
 const consoleProvider: EmailProvider = {
   async send(message) {
     logger.info("📧 [email:console] gönderiliyor (gerçekte gönderilmedi)", {
@@ -26,10 +22,6 @@ const consoleProvider: EmailProvider = {
   },
 };
 
-/**
- * SMTP (Mailtrap, Mailpit, Gmail vb.) - Nodemailer üzerinden.
- * Modül lazy import edilir ki provider seçili değilse yüklenmesin.
- */
 function createSmtpProvider(): EmailProvider {
   if (!env.SMTP_HOST || !env.SMTP_PORT) {
     throw new Error("EMAIL_PROVIDER=smtp için SMTP_HOST ve SMTP_PORT gerekli");
@@ -68,9 +60,6 @@ function createSmtpProvider(): EmailProvider {
   };
 }
 
-/**
- * Resend (production). RESEND_API_KEY gerekir.
- */
 function createResendProvider(): EmailProvider {
   if (!env.RESEND_API_KEY) {
     throw new Error("EMAIL_PROVIDER=resend için RESEND_API_KEY gerekli");

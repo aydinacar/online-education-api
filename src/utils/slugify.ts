@@ -1,7 +1,3 @@
-/**
- * "Modern React Kursu!" -> "modern-react-kursu"
- * Türkçe karakterleri de doğru çevirir.
- */
 export function slugify(text: string): string {
   const turkishMap: Record<string, string> = {
     ç: "c",

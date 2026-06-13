@@ -7,11 +7,6 @@ export const verificationTokenTypeEnum = pgEnum(
   VERIFICATION_TOKEN_TYPES,
 );
 
-/**
- * E-posta doğrulama ve şifre sıfırlama token'ları.
- * Token'ın kendisi DB'de tutulmaz - sadece SHA-256 hash'i saklanır,
- * ham token kullanıcıya mail'le gider. Tek kullanımlık (usedAt) ve süreli.
- */
 export const verificationTokens = pgTable(
   "verification_tokens",
   {

@@ -20,9 +20,6 @@ export interface PaginationMeta {
   hasPrev: boolean;
 }
 
-/**
- * Query params'ten offset/limit hesaplar, sınırlara dayanır.
- */
 export function getPagination({ page, limit }: PaginationParams): PaginationResult {
   const safePage = Math.max(1, page ?? PAGINATION.DEFAULT_PAGE);
   const safeLimit = Math.min(
